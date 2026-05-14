@@ -77,7 +77,6 @@
 #include <locale>
 #include <coroutine>
 #include <concepts>
-#include <format>
 #include <ranges>
 #include <span>
 #include <iostream>
@@ -86,26 +85,25 @@
 
 template<std::integral T>
 void cpp20_info(T value) {
-    std::cout << std::format("[INFO] Value: {}\n", value);
+    std::cout << "[INFO] Value: " << value << '\n';
 }
 
 void cpp20_info(const char* value) {
-    std::cout << std::format("[INFO] {}\n", value);
+    std::cout << "[INFO] " <<  value << '\n';
 }
 
 void cpp20_info(const std::string& value) {
-    std::string formatted = std::format("[C++20-STRING] {}", value);
-    std::cout << formatted << std::endl;
+    std::cout << value << std::endl;
 }
 
 template<std::ranges::range R>
     requires (!std::same_as<R, std::string>)
 void cpp20_info(R&& range) {
-    std::cout << std::format("[INFO] Range size: {}\n", std::ranges::distance(range));
+    std::cout << "[INFO] Range size: " << std::ranges::distance(range) << '\n';
 }
 
 void cpp20_info(std::span<const int> sp) {
-    std::cout << std::format("[INFO] Span size: {}, first: {}\n", sp.size(), sp[0]);
+    std::cout << "[INFO] Span size: " <<  sp.size() << ", first: " << sp[0] << '\n';
 }
 
 struct Cpp20Task {
@@ -125,7 +123,7 @@ struct Awaitable {
 };
 
 Cpp20Task cpp20_coro_demo(const char* msg) {
-    std::cout << std::format("[CORO] {}\n", msg);
+    std::cout << "[CORO] "<< msg << '\n';
     co_return;
 }
 
