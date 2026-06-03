@@ -586,7 +586,7 @@ if test "$JUSTUNPACK" = "no"; then
     else
         Info "Successfully installed into $ABSOUTDIR"
     fi
-    Info "For support please visit https://nzbget.com/forum/"
+    Info "For support please visit https://github.com/nzbgetcom/nzbget/discussions"
     Linux2FreeBSD "kernel-check"
 else
     Info "Unpacked into $ABSOUTDIR"

@@ -3183,7 +3183,7 @@ var UpdateDialog = (new function($)
 	var VersionInfo;
 	var PackageInfo;
 	var UpdateInfo;
-	var lastUpTimeSec;
+	var lastServerStartTime;
 	var installing = false;
 	var logReceived = false;
 	var foreground = false;
@@ -3414,7 +3414,7 @@ var UpdateDialog = (new function($)
 
 		RPC.call('status', [], function(status)
 			{
-				lastUpTimeSec = status.UpTimeSec;
+				lastServerStartTime = status.ServerTime - status.UpTimeSec;
 				RPC.call('startupdate', [kind], updateStarted);
 			});
 	}
@@ -3494,8 +3494,12 @@ var UpdateDialog = (new function($)
 	{
 		RPC.call('status', [], function(status)
 			{
-				// OK, checking if it is a restarted instance
-				if (status.UpTimeSec >= lastUpTimeSec)
+				// OK, checking if it is a restarted instance.
+				// Compare process start times instead of absolute uptime: the restarted
+				// instance has a later start time. This works regardless of how long the
+				// old instance had been running.
+				var serverStartTime = status.ServerTime - status.UpTimeSec;
+				if (serverStartTime <= lastServerStartTime)
 				{
 					// the old instance is not restarted yet
 					// waiting 0.5 sec. and retrying
