@@ -3454,7 +3454,7 @@ var UpdateDialog = (new function($)
 					updateLogTable(data);
 					setTimeout(updateLog, 500);
 				}
-			}, terminated);
+			}, terminated, { timeout: 5000 });
 	}
 
 	function terminated()
@@ -3525,7 +3525,7 @@ var UpdateDialog = (new function($)
 				{
 					setTimeout(checkStatus, 500);
 				}
-			});
+			}, { timeout: 5000 });
 	}
 
 }(jQuery));
