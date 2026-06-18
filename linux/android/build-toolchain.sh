@@ -56,13 +56,12 @@ esac
 echo "Creating toolchain for $ARCH"
 
 # Android NDK
-NDK_VERSION="r19c"
+NDK_VERSION="r27c"
 NDK_DIRNAME="android-ndk-$NDK_VERSION"
-NDK_ARCHIVE="$NDK_DIRNAME-linux-x86_64.zip"
+NDK_ARCHIVE="$NDK_DIRNAME-linux.zip"
 NDK_URL="https://dl.google.com/android/repository/$NDK_ARCHIVE"
 
-### START OF THE SCRIPT
-
+# Root directory for the toolchain
 ROOTDIR="/build/android"
 ROOTDIR="$ROOTDIR/$ARCH-ndk"
 
@@ -92,4 +91,10 @@ echo "Preparing standalone NDK toolchain"
 python3 android-ndk/build/tools/make_standalone_toolchain.py --arch $NDK_ARCH --api $APILEVEL --install-dir $ROOTDIR/output/host/usr
 cd $ROOTDIR
 ln -s host/usr/sysroot output/staging
+
+# Copy llvm-ar / llvm-ranlib / llvm-strip to correct target path
+cp $ROOTDIR/output/host/usr/bin/llvm-ar $ROOTDIR/output/host/usr/bin/$NDK_TARGET-ar
+cp $ROOTDIR/output/host/usr/bin/llvm-ranlib $ROOTDIR/output/host/usr/bin/$NDK_TARGET-ranlib
+cp $ROOTDIR/output/host/usr/bin/llvm-strip $ROOTDIR/output/host/usr/bin/$NDK_TARGET-strip
+
 echo "Toolchain creation completed for $ARCH"

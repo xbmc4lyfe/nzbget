@@ -23,10 +23,6 @@ message(STATUS "  DISABLE PARCHECK:  ${DISABLE_PARCHECK}")
 
 set(BOOST_NEEDED_COMPONENTS json)
 
-if(NOT HAVE_STD_FILESYSTEM)
-	list(APPEND BOOST_NEEDED_COMPONENTS filesystem)
-endif()
-
 if(APPLE)
 	# On macOS Cmake, when cross-compiling, sometimes CMAKE_SYSTEM_PROCESSOR wrongfully stays
 	# the same as CMAKE_HOST_SYSTEM_PROCESSOR regardless the target CPU.
@@ -112,9 +108,6 @@ else()
 		list(APPEND EXTERNAL_DEPS boost)
 	else()
 		set(LIBS ${LIBS} Boost::json)
-		if(NOT HAVE_STD_FILESYSTEM)
-			set(LIBS ${LIBS} Boost::filesystem)
-		endif()
 		set(INCLUDES ${INCLUDES} ${Boost_INCLUDE_DIR})
 	endif()
 endif()
@@ -133,11 +126,6 @@ check_include_files(regex.h HAVE_SYSTEM_REGEX_H)
 
 if(NOT HAVE_SYSTEM_REGEX_H)
 	list(APPEND EXTERNAL_DEPS regex)
-endif()
-
-# Large File Support (LFS)
-if (NOT TOOLCHAIN_PREFIX MATCHES "android")
-	add_compile_definitions(_FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE _LARGE_FILES)
 endif()
 
 check_include_files(sys/prctl.h HAVE_SYS_PRCTL_H)

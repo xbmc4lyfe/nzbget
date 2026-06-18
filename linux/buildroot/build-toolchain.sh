@@ -26,12 +26,18 @@ if [ -z $ARCH ]; then
     exit 1
 fi
 
+ALL_ARCHS="armel armhf aarch64 i686 x86_64 riscv64 ppc6xx"
+if [[ " $ALL_ARCHS " == *" $ARCH "* ]]; then
+    echo "Building buildroot for $ARCH ..."
+else
+    echo "Unsupported architecture: $ARCH"
+    echo "Supported architectures: $ALL_ARCHS"
+    exit 1
+fi
+
 # config variables
 BUILDROOT_PREFIX=/build/buildroot
-BUILDROOT_VERSION="2022.05.3"
-if [ "$ARCH" == "ppc500" ]; then
-    BUILDROOT_VERSION="2024.02.10"
-fi
+BUILDROOT_VERSION="2025.02.13"
 
 # download buildroot sources and apply config
 NZBGET_ROOT=$PWD
@@ -43,22 +49,11 @@ rm -rf $ARCH
 mv buildroot-$BUILDROOT_VERSION $ARCH && rm buildroot-$BUILDROOT_VERSION.tar.gz
 cd $BUILDROOT_PREFIX/$ARCH
 cp $NZBGET_ROOT/linux/buildroot/config/.config-$ARCH .config
-if [ "$ARCH" == "ppc500" ]; then
-    # patch uclibc and ncurses for ppc500
-    patch package/uclibc/uclibc.mk $NZBGET_ROOT/linux/buildroot/patch/uclibc.ppc500.patch
-    patch package/ncurses/ncurses.mk $NZBGET_ROOT/linux/buildroot/patch/ncurses.ppc500.patch
-    # copy boost patch for ppc500
-    cp $NZBGET_ROOT/linux/buildroot/patch/boost.ppc500.patch $BUILDROOT_PREFIX/$ARCH/package/boost/0002-filesystem-don-t-use-libc-getrandom-force-syscall.patch
-else
-    # revert musl to musl-1.1.24
-    patch package/musl/musl.mk $NZBGET_ROOT/linux/buildroot/patch/musl.mk.patch
-    patch package/musl/musl.hash $NZBGET_ROOT/linux/buildroot/patch/musl.hash.patch
-fi
+
+# revert musl to musl-1.1.24
+patch package/musl/musl.mk $NZBGET_ROOT/linux/buildroot/patch/musl.mk.patch
+patch package/musl/musl.hash $NZBGET_ROOT/linux/buildroot/patch/musl.hash.patch
+
 
 # build toolchain
 time make
-
-# post-build patches
-if [ "$ARCH" == "aarch64" ]; then
-    patch $BUILDROOT_PREFIX/$ARCH/output/host/lib/gcc/aarch64-buildroot-linux-musl/9.4.0/include/arm_acle.h $NZBGET_ROOT/linux/buildroot/patch/arm_acle.h.aarch64.patch
-fi

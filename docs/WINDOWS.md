@@ -1,40 +1,67 @@
-## To build NZBGet you will need:
+# Building NZBGet on Windows
 
- - [CMake](https://cmake.org/)
- - [MS C++ Build tools](https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022)
-   - Download `Build Tools for Visual Studio 2022` and install it
-   - Select `Desktop development with C++` in the `Desktop & Mobile` section and install the necessary components:
-     - MSVC v143 - VS 2022 C++ x64/x86 build tools
-     - Windows 11 SDK
-     - C++ ATL for latest v143 build tools
-     - C++ MFC for latest v143 build tools
-     -  Edit the `Path` enviroment variable and append the folder's path that contains the `MSBuild.exe` to it, e.g.:
+## Prerequisites
 
-        `C:\Users\asus\AppData\Local\Programs\Microsoft VS Code\bin\`
+### Build Tools
 
-To compile the program with TLS/SSL support you need OpenSSL:
-   - [OpenSSL](https://www.openssl.org)
+- [CMake](https://cmake.org/)
+- [Visual Studio 2022 Build Tools](https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022)
 
-Also required are:
-   - [Zlib](https://gnuwin32.sourceforge.net/packages/zlib.htm)
-   - [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home)
-   - [Boost.JSON](https://github.com/boostorg/json)
-   - [Boost.Asio](https://github.com/boostorg/asio)
+During installation of *Build Tools for Visual Studio 2022*, select **Desktop development with C++** and ensure these components are included:
 
-For tests:
-   - [Boost.Test](https://github.com/boostorg/test)
+- MSVC v143 — VS 2022 C++ x64/x86 build tools (C++20 support)
+- Windows 11 SDK
+- C++ ATL for latest v143 build tools
+- C++ MFC for latest v143 build tools
 
-We recommend using [vcpkg](https://vcpkg.io/) to install dependencies:
- - Clone the repository to the recommended `C:\` disk:
-```powershell
-git clone --depth 1 https://github.com/microsoft/vcpkg.git
+After installation, add the MSBuild path to your `PATH` environment variable, e.g.:
+
 ```
- - Run the `bootstrap` script:
-```powershell
-.\vcpkg\bootstrap-vcpkg.bat
+C:\Users\<user>\AppData\Local\Programs\Microsoft VS Code\bin\
 ```
- - Edit the `Path` enviroment variable and append the folder's path: `C:\vcpkg`
- - Install all the dependencies:
+
+---
+
+## Dependencies
+
+### Required Libraries
+
+| Library | Purpose |
+|---------|---------|
+| [OpenSSL](https://www.openssl.org) | TLS/SSL support |
+| [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home) | NZB XML parsing |
+| [zlib](https://gnuwin32.sourceforge.net/packages/zlib.htm) | GZip support |
+| [Boost.JSON](https://github.com/boostorg/json) | JSON handling |
+| [Boost.Asio](https://github.com/boostorg/asio) | Networking / async I/O |
+
+### For Tests
+
+| Library | Purpose |
+|---------|---------|
+| [Boost.Test](https://github.com/boostorg/test) | Unit test framework |
+
+---
+
+## Installing Dependencies with vcpkg
+
+[**vcpkg**](https://vcpkg.io/) is the recommended way to manage dependencies on Windows.
+
+### 1. Install vcpkg
+
+```powershell
+# Clone to C:\ (recommended location)
+git clone --depth 1 https://github.com/microsoft/vcpkg.git C:\vcpkg
+
+# Bootstrap
+C:\vcpkg\bootstrap-vcpkg.bat
+```
+
+Add `C:\vcpkg` to your `PATH` environment variable.
+
+### 2. Install Libraries
+
+#### For x64 (64-bit) builds:
+
 ```powershell
 vcpkg install openssl:x64-windows-static
 vcpkg install libxml2:x64-windows-static
@@ -42,54 +69,93 @@ vcpkg install zlib:x64-windows-static
 vcpkg install boost-json:x64-windows-static
 vcpkg install boost-asio:x64-windows-static
 ```
-  - For tests:
+
+#### For x86 (32-bit) builds:
+
+```powershell
+vcpkg install openssl:x86-windows-static
+vcpkg install libxml2:x86-windows-static
+vcpkg install zlib:x86-windows-static
+vcpkg install boost-json:x86-windows-static
+vcpkg install boost-asio:x86-windows-static
+```
+
+#### For tests (add to either of the above):
+
 ```powershell
 vcpkg install boost-test:x64-windows-static
 ```
 
-For `Win32`, instead of `:x64-windows-static`, use `:x86-windows-static`.
+---
 
-  - Configure:
+## Building
+
+### 1. Configure
+
+#### x64 (64-bit):
+
 ```powershell
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -A x64
+cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+         -DVCPKG_TARGET_TRIPLET=x64-windows-static -A x64
 ```
-  - Or for Win32:
+
+#### x86 (32-bit):
+
 ```powershell
-cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x86-windows-static -A Win32
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+         -DVCPKG_TARGET_TRIPLET=x86-windows-static -A Win32
 ```
-  - Release build:
+
+### 2. Build
+
 ```powershell
+# Release build
 cmake --build . --config Release
-```
-  - Or for debug build:
-```powershell
-cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_BUILD_TYPE=Debug 
-```
-  - Debug build:
-```powershell
+
+# Debug build
 cmake --build . --config Debug
 ```
-  - Now, you can find the binary in the `Release/Debug` directory.
 
+Binaries will be in the `Release\` or `Debug\` directory.
 
-You may run configure with additional arguments:
-  - Disable TLS. Use this option if you cannot use OpenSSL:
+---
+
+## Build Options
+
+| Flag | Description |
+|------|-------------|
+| `-DDISABLE_TLS=ON` | Disable TLS/SSL (use if OpenSSL is unavailable) |
+| `-DENABLE_TESTS=ON` | Build and enable unit tests |
+
+### Debug Build Configuration
 
 ```powershell
-cmake .. -DDISABLE_TLS=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
+cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+         -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+         -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --config Debug
 ```
 
-  - Enable tests:
+---
+
+## Running Tests
+
 ```powershell
-cmake .. -DENABLE_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
-```
-  - Run tests:
-```powershell
+# Configure with tests enabled
+cmake .. -DENABLE_TESTS=ON `
+         -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+         -DVCPKG_TARGET_TRIPLET=x64-windows-static
+
+# Build
+cmake --build . --config Release
+
+# Run tests
 ctest -C Release
-```
- - Or for debug build:
-```powershell
+
+# Debug build tests
 ctest -C Debug
 ```

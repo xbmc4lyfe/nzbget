@@ -9,50 +9,6 @@ env:
   BUILD_TESTING: ${{ (github.ref_name != 'main') && 'testing' || '' }}
 
 jobs:
-  build-x64:
-    runs-on: macos-14
-
-    steps:
-
-    - name: Checkout
-      uses: actions/checkout@v6
-
-    - name: Prepare build environment
-      run: |
-        curl -L https://github.com/nzbgetcom/build-files/releases/download/v3.0/vcpkg-osx-x64-mojave.zip -o $HOME/vcpkg.tar.gz
-        tar zxf $HOME/vcpkg.tar.gz -C $HOME
-
-    - name: Build
-      run: |
-        export ZIP7_VERSION="25.01"
-        export EXTRA_ARGS="-DCMAKE_OSX_SYSROOT=/Applications/Xcode_14.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.sdk -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14"
-        bash osx/build-nzbget.sh x64 ${{ env.BUILD_TYPES }} ${{ env.BUILD_TESTING }}
-
-    - name: Upload full build log on failure
-      uses: actions/upload-artifact@v7
-      if: failure()
-      with:
-        name: nzbget-osx-x64-build-log
-        path: build/*/build.log
-        retention-days: 5
-
-    - name: Rename build artifacts
-      if: github.ref_name != 'main' && github.ref_name != 'develop'
-      run: |
-        cd build
-        SUFFIX="${GITHUB_REF_NAME/\//-}"
-        for FILE in *.zip; do
-          [ -f $FILE ] || continue
-          NEW_FILE=${FILE/-bin-macos-x64/-$SUFFIX-bin-macos-x64}
-          mv $FILE $NEW_FILE
-        done
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: nzbget-osx-installers-x64
-        path: build/*.zip
-        retention-days: 5
 
   build-universal:
     runs-on: macos-14
@@ -163,16 +119,10 @@ jobs:
 
   combine-osx-artifacts:
     runs-on: ubuntu-24.04
-    needs: [build-x64, sign-universal]
+    needs: [sign-universal]
     permissions:
       actions: write
     steps:
-
-    - name: Download x64 build artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: nzbget-osx-installers-x64
-        path: nzbget-osx-installers-x64
 
     - name: Download universal signed build artifact
       uses: actions/download-artifact@v8
@@ -183,7 +133,6 @@ jobs:
     - name: Combine artifacts
       run: |
         mkdir -p nzbget-osx-installers
-        mv nzbget-osx-installers-x64/* nzbget-osx-installers
         mv nzbget-osx-installers-universal-signed/* nzbget-osx-installers
 
     - name: Upload combined build artifacts
@@ -197,6 +146,5 @@ jobs:
       uses: geekyeggo/delete-artifact@v6
       with:
         name: |
-          nzbget-osx-installers-x64
           nzbget-osx-installers-universal
           nzbget-osx-installers-universal-signed

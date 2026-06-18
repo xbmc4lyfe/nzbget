@@ -1,185 +1,182 @@
-## To build NZBGet you will need:
+# Building NZBGet on POSIX (Linux, macOS, FreeBSD)
 
-  - For configuring and building:
-    - [CMake](https://cmake.org/)
-    - [GCC](https://gcc.gnu.org/)
+## Prerequisites
 
-      or
-    - [CLang](https://clang.llvm.org/)
+### Build System & Compiler
 
-  - Libraries:
-    - [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home)
-    - [Boost.JSON](https://github.com/boostorg/json)
-    - [Boost.Asio](https://github.com/boostorg/asio)
-    
-> If you face issues with Boost Libraries on your system, you can skip it - CMake will take care of it.
+| Tool | Minimum Version | Notes |
+|------|----------------|-------|
+| [CMake](https://cmake.org/) | 3.20 | Build system |
+| [GCC](https://gcc.gnu.org/) | 13.4 | C++20 support |
+| [Clang](https://clang.llvm.org/) | 14 | C++20 support (Apple Clang 15 / Xcode 15) |
 
-- And the following libraries are optional:
+### Required Libraries
 
-    - For curses-output-mode (enabled by default):
-      - [ncurses](https://invisible-island.net/ncurses)
-    
-  - For encrypted connections (TLS/SSL):
-    - [OpenSSL](https://www.openssl.org)
+| Library | Purpose |
+|---------|---------|
+| [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home) | NZB XML parsing |
+| [Boost.JSON](https://github.com/boostorg/json) | JSON handling |
+| [Boost.Asio](https://github.com/boostorg/asio) | Networking / async I/O |
+| [zlib](https://www.zlib.net/) | GZip support (web server & client) |
 
-  - For gzip support in web-server and web-client (enabled by default):
-    - [zlib](https://www.zlib.net/)
-  
-  - For tests:
-    - [Boost.Test](https://github.com/boostorg/test)
+### Optional Libraries
 
-  - For static code analysis:
-    - [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/)
-    - [Cppcheck](https://cppcheck.sourceforge.io/)
+| Library | Purpose |
+|---------|---------|
+| [ncurses](https://invisible-island.net/ncurses) | Terminal UI mode (enabled by default) |
+| [OpenSSL](https://www.openssl.org) | TLS/SSL encrypted connections |
+| [Boost.Test](https://github.com/boostorg/test) | Unit tests |
 
-Please note that you also 
-need the developer packages for these libraries too, they package names 
-have often suffix "dev" or "devel". On other systems you may need to 
-download the libraries at the given URLs and compile them (see hints below).
+### Static Code Analysis (Optional)
 
-### Debian:  
+- [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/)
+- [Cppcheck](https://cppcheck.sourceforge.io/)
+
+> **Note:** You need the development packages for these libraries. Package names often have a `-dev` or `-devel` suffix.
+
+---
+
+## Quick Start
+
+The fastest way to build and run NZBGet:
+
 ```bash
-apt install cmake build-essential libncurses-dev libssl-dev libxml2-dev zlib1g-dev
+# Clone
+git clone https://github.com/nzbgetcom/nzbget.git
+cd nzbget
+
+# Configure
+mkdir build && cd build
+cmake ..
+
+# Build (use -j with your CPU core count)
+cmake --build . -j "$(nproc)"
+
+# Run
+./nzbget -s
 ```
-  - Debian 12 (bookworm)
+
+---
+
+## Installing Dependencies
+
+### Debian / Ubuntu
+
 ```bash
-apt install libboost-json1.81-dev
-apt install libboost-test1.81-dev #(optional: for testing)
+# Build essentials and required libraries
+apt install cmake build-essential libncurses-dev libssl-dev \
+            libxml2-dev zlib1g-dev
+
+# Boost
+apt install libboost-json-dev libboost-asio-dev
+
+# For tests
+apt install libboost-test-dev
+
+# For static analysis
+apt install clang-tidy cppcheck
 ```
-  - Debian 13 (trixie)
-```bash
-apt install libboost-json-dev 
-apt install libboost-test-dev #(optional: for testing)
-```
-  - For static code analysis:
-```bash
-apt install clang-tidy
-```
-### FreeBSD: 
+
+### FreeBSD
+
 ```bash
 pkg install cmake ncurses openssl libxml2 zlib boost-libs
 ```
-### macOS:
+
+### macOS
+
 ```bash
+# Install Xcode Command Line Tools
 xcode-select --install
+
+# Install dependencies via Homebrew
 brew install cmake ncurses openssl libxml2 zlib boost
 ```
 
-## 4. Installation on POSIX
+---
 
-Installation from the source distribution archive (nzbget-VERSION.tar.gz):
+## Build Options
 
-  - Untar the nzbget-source:
-```bash
-tar -zxf nzbget-VERSION.tar.gz
-```
-  - Change into nzbget-directory:
-```bash
-cd nzbget-VERSION
-```
-  - Configure:
-``` bash
-mkdir build
-cd build
-cmake ..
-```
-  - In a case you don't have root access or want to install the program
-    in your home directory use the configure parameter -DCMAKE_INSTALL_PREFIX:
-```bash
-cmake .. -DCMAKE_INSTALL_PREFIX=~/usr
-```
-  - Build, specifying (-j 8) how many CPU cores to use to speed up compilation:
-```bash
-cmake --build . -j 8 
-```
-  - Install:
-```bash
-cmake --install .
-```
-  - Uninstall:
-```bash
-cmake --build . --target uninstall
-```
-  - Install configuration files into <prefix>/etc via:
-```bash
-cmake --build . --target install-conf
-```
-  - Uninstall configuration files into <prefix>/etc via:
-```bash
-cmake --build . --target uninstall-conf
-```
-  - Run tests on POSIX:
-```bash
-ctest
-```
+Pass these flags to `cmake ..` to customize your build:
 
-### Configure-options
----------------------
-You may run configure with additional arguments:
-  - Enable tests:
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-DCMAKE_BUILD_TYPE=Debug` | Debug build (no optimizations, debug symbols) | `Release` |
+| `-DCMAKE_INSTALL_PREFIX=~/usr` | Install to a custom prefix | `/usr/local` |
+| `-DENABLE_TESTS=ON` | Build and enable unit tests | `OFF` |
+| `-DENABLE_STATIC=ON` | Produce a fully static binary | `OFF` |
+| `-DENABLE_SANITIZERS=ON` | Enable leak, address, and undefined-behavior sanitizers | `OFF` |
+| `-DENABLE_CLANG_TIDY=ON` | Run Clang-Tidy static analysis during build | `OFF` |
+| `-DDISABLE_CURSES=ON` | Disable ncurses terminal UI | `OFF` |
+| `-DDISABLE_PARCHECK=ON` | Disable par2 check module | `OFF` |
+| `-DDISABLE_TLS=ON` | Disable TLS/SSL support | `OFF` |
+| `-DDISABLE_GZIP=ON` | Disable GZip compression | `OFF` |
+| `-DDISABLE_SIGCHLD_HANDLER=ON` | Disable SIGCHLD handler (may be needed on 32-bit BSD) | `OFF` |
+
+### Static Build with Custom Link Flags
+
 ```bash
-cmake .. -DENABLE_TESTS=ON
-```
-  - Enable Clang-Tidy static code analyzer:
-```bash
-cmake .. -DENABLE_CLANG_TIDY=ON
-```
-  - Disable ncurses. Use this option if you cannot use ncurses:
-```bash
-cmake .. -DDISABLE_CURSES=ON
-```
-  - Disable parcheck. Use this option if you have troubles when compiling par2-module:
-```bash
-cmake .. -DDISABLE_PARCHECK=ON
-```
-  - **[Deprecated]** Disable TLS. Use this option if you cannot use OpenSSL:
-```bash
-cmake .. -DDISABLE_TLS=ON
-```
-  - Disable gzip. Use this option if you cannot use zlib:
-```bash
-cmake .. -DDISABLE_GZIP=ON
-``` 
-  - Disable sigchld-handler. The disabling may be necessary on 32-Bit BSD:
-```bash
-cmake .. -DDISABLE_SIGCHLD_HANDLER=ON
-``` 
-  - For debug build:
-```bash
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-``` 
-  - Enable leak, undefined, address sanitizers:
-```
-cmake .. -DENABLE_SANITIZERS=ON
-```
-  - To get a static binary:
-```bash
-cmake .. -DENABLE_STATIC=ON
-```
-`LIBS` and `INCLUDES` env variables can be useful for static linking, since CMake looks for shared libraries by default:
-```
-export LIBS="-lncurses -ltinfo -lboost_json -lxml2 -lz -lm -lssl -lcrypto -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
+export LIBS="-lncurses -ltinfo -lboost_json -lxml2 -lz -lm -lssl -lcrypto \
+             -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
 export INCLUDES="/usr/include/;/usr/include/libxml2/"
 cmake .. -DENABLE_STATIC=ON
 ```
-## Cppcheck
 
-**Cppcheck** is a static analysis tool that helps you find bugs in your C/C++ code.
+---
 
-### Installation
-
-Install **Cppcheck** using your system's package manager:
+## Build & Install
 
 ```bash
-apt install cppcheck
+# Configure (with options as needed)
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+
+# Build (adjust -j to your CPU core count)
+cmake --build . -j "$(nproc)"
+
+# Install to the prefix (default: /usr/local)
+cmake --install .
+
+# Install configuration files to <prefix>/etc
+cmake --build . --target install-conf
+
+# Uninstall
+cmake --build . --target uninstall
+cmake --build . --target uninstall-conf
 ```
-  - After configuring, a **compile_commands.json** file should be generated in your build directory. This file tells **Cppcheck** how your project is compiled.
-  - The following command enables all checks and suppresses common system include warnings:
+
+---
+
+## Running Tests
+
 ```bash
+# Configure with tests enabled
+cmake .. -DENABLE_TESTS=ON
+
+# Build and run all tests
+cmake --build . -j "$(nproc)"
+ctest --output-on-failure
+```
+
+---
+
+## Static Analysis
+
+### Cppcheck
+
+After configuring the project (which generates `compile_commands.json` in the build directory):
+
+```bash
+# Run all checks, suppressing system include noise
 cppcheck --project=compile_commands.json --enable=all --suppress=missingIncludeSystem
+
+# Skip a directory (e.g., third-party code)
+cppcheck --project=compile_commands.json --enable=all --suppress=missingIncludeSystem -i3rdparty
 ```
- - To ignore certain folders you can use **-i**. This will skip analysis of source files in
-the foo folder:
+
+### Clang-Tidy
+
 ```bash
-cppcheck --project=compile_commands.json --enable=all --suppress=missingIncludeSystem -ifoo
+cmake .. -DENABLE_CLANG_TIDY=ON
+cmake --build . -j "$(nproc)"
 ```

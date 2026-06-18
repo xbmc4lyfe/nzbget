@@ -20,9 +20,9 @@
 
 NZBGet is a binary downloader, which downloads files from Usenet based-on information given in nzb files.
 
-NZBGet is written in C++ and is known for its performance and efficiency.
+NZBGet is written in **C/C++** and is known for its performance and efficiency.
 
-NZBGet can run on almost any device - classic PC, NAS, media player, SAT-receiver, WLAN-router, etc. The download area provides precompiled binaries for Windows, macOS, and Linux. For other platforms, the program can be compiled from source.
+NZBGet runs on a wide range of devices — classic PCs, NAS, media players, SAT-receivers, WLAN-routers, and more. Precompiled binaries are available for Windows, macOS, and Linux. For other platforms, the program can be compiled from source.
 
 This is a fork of the original NZBGet project, formerly maintained by [hugbug](https://github.com/hugbug). The nzbget.com project is an extension of the original, and is maintained in honor-of and with respect-to its maintainer of many years.  We hope to continue where the [hugbug](https://github.com/hugbug) left-off by providing a useful downloader for the benefit of the Usenet community.
 
@@ -32,15 +32,15 @@ More information available at https://nzbget.com
 | Platform | Installation                                                                                                                                                                                             | Supported Architectures / OS Versions                                                                                                                                 |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Windows** | [Releases](https://github.com/nzbgetcom/nzbget/releases) <br>[Winget](https://github.com/nzbgetcom/nzbget/blob/develop/windows/pkgs-info.md#winget) <br>[Chocolatey](https://github.com/nzbgetcom/nzbget/blob/develop/windows/pkgs-info.md#chocolatey) | Windows 7 and later, 32 or 64 bit |
-| **macOS** | [Releases](https://github.com/nzbgetcom/nzbget/releases) <br>[Homebrew](https://github.com/nzbgetcom/nzbget/blob/develop/osx/brew-info.md)  | macOS Mojave 10.14+ and later (Intel / Apple Silicon) | 
-| **Linux** | [Releases](https://github.com/nzbgetcom/nzbget/releases) <br>[DEB/RPM](https://github.com/nzbgetcom/nzbget/releases) [Repositories](https://nzbgetcom.github.io/) <br>[Flatpack](https://github.com/nzbgetcom/nzbget/releases) [Flatpack readme](https://github.com/nzbgetcom/nzbget/blob/develop/linux/flatpak/README.md) <br>[snap](https://snapcraft.io/nzbget) | Linux kernel 2.6 and later, x86 (32 or 64 Bit), ARM 32-bit (armel armhf), ARM 64-bit (aarch64), MIPS (mipseb mipsel), PowerPC (ppc6xx ppc500), RISC-V 64-bit (riscv64) |
+| **macOS** | [Releases](https://github.com/nzbgetcom/nzbget/releases) <br>[Homebrew](https://github.com/nzbgetcom/nzbget/blob/develop/osx/brew-info.md)  | macOS Monterey 12+ and later (Intel / Apple Silicon) | 
+| **Linux** | [Releases](https://github.com/nzbgetcom/nzbget/releases) <br>[DEB/RPM](https://github.com/nzbgetcom/nzbget/releases) [Repositories](https://nzbgetcom.github.io/) <br>[Flatpack](https://github.com/nzbgetcom/nzbget/releases) [Flatpack readme](https://github.com/nzbgetcom/nzbget/blob/develop/linux/flatpak/README.md) <br>[snap](https://snapcraft.io/nzbget) | Linux kernel 3.2 and later, x86 (32 or 64 Bit), ARM 32-bit (armel armhf), ARM 64-bit (aarch64), PowerPC (ppc6xx), RISC-V 64-bit (riscv64) |
 | **FreeBSD** | [Releases](https://github.com/nzbgetcom/nzbget/releases) | FreeBSD 13.0+ x86_64 |
 | **Docker** | [Official images](docker/README.md) <br>[LinuxServer.io](https://github.com/linuxserver/docker-nzbget) | x86-64 / arm64 / armv7  |
 | <nobr>**Synology NAS** | [SynoCommunity package](docs/SYNOLOGY.md) | Synology DSM 7.x 6.x 3.x |
 | <nobr>**ASUSTOR NAS** | [nzbget-asustor](https://github.com/nzbgetcom/nzbget-asustor) <br>[App Central](https://www.asustor.com/app_central/app_detail?id=1671&type=) [ASUSTOR readme](https://github.com/nzbgetcom/nzbget-asustor/blob/main/README.md) | ADM 4.3+ |
 | <nobr>**QNAP NAS** | [package manager](https://github.com/nzbgetcom/nzbget/blob/develop/qnap/README.md#install-via-sherpa-package-manager) <br>[manual installation](https://github.com/nzbgetcom/nzbget/blob/develop/qnap/README.md#manual-install)  | QTS 4.1.0+ (x86_64 / x86 / arm_64 / arm-x19 / arm-x31 / arm-x41) |
 | <nobr>**TrueNAS SCALE** | [TrueNAS App catalog](https://apps.truenas.com/catalog/nzbget/) | x86-64 (amd64) |
-| **Android** | [Instructions](docs/ANDROID.md) | Android 5.0+ aarch64 |
+| **Android** | [Instructions](docs/ANDROID.md) | Android 5.0+ aarch64, i686, x86-64 (amd64), armhf |
 
 ## Migration from older NZBGet versions
 

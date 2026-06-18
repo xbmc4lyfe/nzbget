@@ -30,7 +30,7 @@ COREX=4
 TESTING="no"
 
 # build variables
-ALL_ARCHS="armel armhf aarch64 i686 x86_64 riscv64 mipsel mipseb ppc500 ppc6xx i686-ndk x86_64-ndk armhf-ndk aarch64-ndk x86_64-bsd"
+ALL_ARCHS="armel armhf aarch64 i686 x86_64 riscv64 ppc6xx i686-ndk x86_64-ndk armhf-ndk aarch64-ndk x86_64-bsd"
 ALL_PLATFORMS="linux android freebsd"
 OUTPUTDIR=build
 BUILDROOT_HOME=/build
@@ -38,24 +38,29 @@ LIB_SRC_PATH=$BUILDROOT_HOME/source
 LIB_PATH=$BUILDROOT_HOME/lib
 # freebsd variables
 FREEBSD_SYSROOT=/build/freebsd/sysroot
-FREEBSD_CLANG_VER=14
+FREEBSD_CLANG_VER=18
 
 # unpackers versions
 UNRAR6_VERSION=6.2.12
 UNRAR7_VERSION=7.2.6
 ZIP7_VERSION=26.01
 
-# libs versions
+# libs versions and urls
 # https://invisible-island.net/ncurses/announce.html
 NCURSES_VERSION=6.5
+NCURSES_URL="https://invisible-island.net/archives/ncurses/ncurses-$NCURSES_VERSION.tar.gz"
 # https://zlib.net/
 ZLIB_VERSION=1.3.1
+ZLIB_URL="https://zlib.net/zlib-$ZLIB_VERSION.tar.gz"
 # https://gitlab.gnome.org/GNOME/libxml2/-/releases
 LIBXML2_VERSION=2.13.5
+LIBXML2_URL="https://gitlab.gnome.org/GNOME/libxml2/-/archive/v$LIBXML2_VERSION/libxml2-v$LIBXML2_VERSION.tar.gz"
 # https://github.com/openssl/openssl/releases
 OPENSSL_VERSION=3.5.5
+OPENSSL_URL="https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz"
 # https://github.com/boostorg/boost/releases
 BOOST_VERSION=1.84.0
+BOOST_URL="https://github.com/boostorg/boost/releases/download/boost-$BOOST_VERSION/boost-$BOOST_VERSION.tar.gz"
 
 help()
 {
@@ -286,25 +291,9 @@ build_lib()
                         ;;
                     riscv64)
                         OPENSSL_ARCH=linux64-riscv64
-                        # patch crypto/riscv64cpuid.pl to compile on gcc9
-                        # issue https://github.com/openssl/openssl/issues/23011
-                        sed -i \
-                            -e 's|csrr $ret, vlenb|csrr a0, 0xc22|' \
-                            -e 's|slli $ret, $ret, 3|slli a0, a0, 3|' \
-                            crypto/riscv64cpuid.pl
-                        ;;
-                    mipseb)
-                        OPENSSL_ARCH=linux-mips32
-                        ;;
-                    mipsel)
-                        OPENSSL_ARCH=linux-mips32
                         ;;
                     ppc6xx)
                         OPENSSL_ARCH=linux-ppc
-                        ;;
-                    ppc500)
-                        OPENSSL_ARCH=linux-ppc
-                        OPENSSL_OPTS=no-async
                         ;;
                     x86_64-bsd)
                         OPENSSL_ARCH=BSD-x86_64
@@ -365,7 +354,7 @@ build_lib()
                 ./bootstrap.sh --with-libraries=json,filesystem --prefix="$PWD/../$LIB"
                 if [ "$PLATFORM" == "freebsd" ]; then
                     echo "using clang : clang : clang-$FREEBSD_CLANG_VER ; " >>  project-config.jam
-                    ./b2 --toolset=clang cxxflags="--target=x86_64-pc-freebsd --sysroot=$FREEBSD_SYSROOT -I$FREEBSD_SYSROOT/usr/include/c++/v1" cxxstd=14 link=static runtime-link=static install
+                    ./b2 --toolset=clang cxxflags="--target=x86_64-pc-freebsd --sysroot=$FREEBSD_SYSROOT -I$FREEBSD_SYSROOT/usr/include/c++/v1" cxxstd=20 link=static runtime-link=static install
                 else
                     echo "using gcc : buildroot : $CXX ; " >>  project-config.jam
                     ./b2 --toolset=gcc-buildroot cxxstd=14 link=static runtime-link=static install
@@ -428,7 +417,11 @@ build_7zip()
         tar xf 7z.tar.xz
         rm 7z.tar.xz
         cd CPP/7zip
-        sed "s|^LDFLAGS_STATIC =.*|LDFLAGS_STATIC = -static|" -i 7zip_gcc.mak
+        if [ "$PLATFORM" == "android" ]; then
+            sed "s|^LDFLAGS_STATIC =.*|LDFLAGS_STATIC = -nostdlib++ -Wl,-Bstatic -lc++_static -lc++abi -lunwind -Wl,-Bdynamic|" -i 7zip_gcc.mak
+        else
+            sed "s|^LDFLAGS_STATIC =.*|LDFLAGS_STATIC = -static|" -i 7zip_gcc.mak
+        fi
         if [ "$PLATFORM" == "android" ]; then
             sed "s|^#if defined(TIME_UTC)|#if defined(_TIME_UTC)|g" -i ../Windows/TimeUtils.cpp
             sed "s|^LIB2 =.*|LIB2 = |g" -i 7zip_gcc.mak
@@ -476,7 +469,11 @@ build_unrar_version()
     fi
     # some unrar7 optimizations
     if [ "$UNRAR_VERSION" == "7" ]; then
-        sed "s|LDFLAGS=-pthread|LDFLAGS=-pthread -static|" -i makefile
+        if [ "$PLATFORM" == "android" ]; then
+            sed "s|LDFLAGS=-pthread|LDFLAGS=-pthread -nostdlib++ -Wl,-Bstatic -lc++_static -lc++abi -lunwind -Wl,-Bdynamic|" -i makefile
+        else
+            sed "s|LDFLAGS=-pthread|LDFLAGS=-pthread -static|" -i makefile
+        fi
         case $ARCH in
             x86_64)
                 sed "s|CXXFLAGS=-march=native|CXXFLAGS=-march=x86-64|" -i makefile
@@ -492,7 +489,11 @@ build_unrar_version()
                 ;;
         esac
     else
-        sed "s|^LDFLAGS=.*|LDFLAGS=-static|" -i makefile
+        if [ "$PLATFORM" == "android" ]; then
+            sed "s|^LDFLAGS=.*|LDFLAGS=-nostdlib++ -Wl,-Bstatic -lc++_static -lc++abi -lunwind -Wl,-Bdynamic|" -i makefile
+        else
+            sed "s|^LDFLAGS=.*|LDFLAGS=-static|" -i makefile
+        fi
         sed "s|^CXXFLAGS=.*|CXXFLAGS=-std=c++11 -O2|" -i makefile
     fi
     if [ "$PLATFORM" == "freebsd" ]; then
@@ -556,20 +557,8 @@ build_bin()
             export HOST="riscv64-buildroot-linux-musl"
             CMAKE_SYSTEM_PROCESSOR="riscv64"
             ;;
-        mipseb)
-            export HOST="mips-buildroot-linux-musl"
-            CMAKE_SYSTEM_PROCESSOR="mips"
-            ;;
-        mipsel)
-            export HOST="mipsel-buildroot-linux-musl"
-            CMAKE_SYSTEM_PROCESSOR="mips"
-            ;;
         ppc6xx)
             export HOST="powerpc-buildroot-linux-musl"
-            CMAKE_SYSTEM_PROCESSOR="powerpc"
-            ;;
-        ppc500)
-            export HOST="powerpc-buildroot-linux-uclibcspe"
             CMAKE_SYSTEM_PROCESSOR="powerpc"
             ;;
         i686-ndk)
@@ -633,15 +622,12 @@ build_bin()
         export CPPFLAGS=$CXXFLAGS
     fi
 
-    # skip building libs for ppc500 arch
-    # for ppc500 arch we use buildroot libs
-    if [ "$ARCH" != "ppc500" ]; then
-        build_lib "https://invisible-island.net/archives/ncurses/ncurses-$NCURSES_VERSION.tar.gz"
-        build_lib "https://zlib.net/zlib-$ZLIB_VERSION.tar.gz"
-        build_lib "https://gitlab.gnome.org/GNOME/libxml2/-/archive/v$LIBXML2_VERSION/libxml2-v$LIBXML2_VERSION.tar.gz"
-        build_lib "https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz"
-        build_lib "https://github.com/boostorg/boost/releases/download/boost-$BOOST_VERSION/boost-$BOOST_VERSION.tar.gz"
-    fi
+    # build libs
+    build_lib $NCURSES_URL
+    build_lib $ZLIB_URL
+    build_lib $LIBXML2_URL
+    build_lib $OPENSSL_URL
+    build_lib $BOOST_URL
 
     build_7zip
     build_unrar
@@ -652,8 +638,14 @@ build_bin()
     TOOLCHAIN_PREFIX="$TOOLCHAIN_PATH/$ARCH/output/host/usr/bin/$HOST"
     case $PLATFORM in
         android)
-            export LIBS="$LDFLAGS -lxml2 -lboost_json -lboost_filesystem -lssl -lcrypto -lz -lncursesw -latomic"
-            CMAKE_EXTRA_ARGS="-DCOMPILER=clang -DTOOLCHAIN_PREFIX=$TOOLCHAIN_PREFIX"
+            # Keep app-specific and C++ runtime libs static (-Wl,-Bstatic/-Bdynamic).
+            # libc++_static + libunwind replace the default libc++_shared.so.
+            # -nostdlib++ (in CMAKE_EXE_LINKER_FLAGS) stops clang++ auto-linking libc++_shared.so.
+            # The global -static flag is removed from the cmake-generated link command below
+            # so that Android system libs (libc.so) are linked dynamically, which allows
+            # getaddrinfo to route through Android's DNS resolver (broken in static since NDK r23).
+            export LIBS="$LDFLAGS -Wl,-Bstatic -lxml2 -lboost_json -lboost_filesystem -lssl -lcrypto -lz -lncursesw -latomic -lc++_static -lc++abi -lunwind -Wl,-Bdynamic"
+            CMAKE_EXTRA_ARGS="-DCOMPILER=clang -DTOOLCHAIN_PREFIX=$TOOLCHAIN_PREFIX -DCMAKE_EXE_LINKER_FLAGS=-nostdlib++"
             ;;
         freebsd)
             export LIBS="$LDFLAGS -lxml2 -lboost_json -lssl -lcrypto -lz -lncursesw -lc++ -lexecinfo -lelf -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
@@ -662,12 +654,7 @@ build_bin()
             CMAKE_EXTRA_ARGS="-DCMAKE_SYSROOT=$FREEBSD_SYSROOT -DCMAKE_CXX_FLAGS=-I$FREEBSD_SYSROOT/usr/include/c++/v1"
             ;;
         *)
-            if [ "$ARCH" != "ppc500" ]; then
-                export LIBS="$LDFLAGS -lxml2 -lrt -lboost_json -lc -lssl -lcrypto -lz -lncursesw -latomic -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
-            else
-                export LIBS="-lstdc++fs -lncurses -lboost_json -lxml2 -lz -lm -lssl -lcrypto -lz -ltinfow -latomic"
-                export INCLUDES="$TOOLCHAIN_PATH/$ARCH/output/host/$HOST/sysroot/usr/include/;$TOOLCHAIN_PATH/$ARCH/output/host/$HOST/sysroot/usr/include/libxml2/"
-            fi
+            export LIBS="$LDFLAGS -lxml2 -lrt -lboost_json -lc -lssl -lcrypto -lz -lncursesw -latomic -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
             CMAKE_EXTRA_ARGS="-DTOOLCHAIN_PREFIX=$TOOLCHAIN_PREFIX"
             ;;
     esac
@@ -693,6 +680,15 @@ build_bin()
         -DVERSION_SUFFIX=$VERSION_SUFFIX \
         -DCMAKE_INSTALL_PREFIX=$NZBGET_ROOT/$OUTPUTDIR/install/$ARCH \
         $CMAKE_EXTRA_ARGS
+
+    # Android: remove the -static linker flag injected by ENABLE_STATIC so that
+    # Android system libraries (libc.so) are linked dynamically. This allows
+    # getaddrinfo to route through Android's DNS resolver (broken in static builds
+    # since NDK r23). App-specific libraries remain static via -Wl,-Bstatic in LIBS.
+    if [ "$PLATFORM" == "android" ]; then
+        find $OUTPUTDIR/$ARCH -name "link.txt" | xargs -r sed -i 's/ -static\b//g'
+    fi
+
     BUILD_STATUS=""
     cmake --build $OUTPUTDIR/$ARCH -j $COREX 2>$OUTPUTDIR/$ARCH/build.log || BUILD_STATUS=$?
     if [ ! -z $BUILD_STATUS ]; then
