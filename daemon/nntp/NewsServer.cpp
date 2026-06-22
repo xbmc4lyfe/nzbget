@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 2004 Sven Henkel <sidddy@users.sourceforge.net>
  *  Copyright (C) 2007-2016 Andrey Prygunkov <hugbug@users.sourceforge.net>
+ *  Copyright (C) 2026 Denis <denis@nzbget.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,5 +34,38 @@ NewsServer::NewsServer(int id, bool active, const char* name, const char* host, 
 	if (m_name.Empty())
 	{
 		m_name.Format("server%i", id);
+	}
+}
+
+void NewsServer::DelayConnect()
+{
+	constexpr std::chrono::milliseconds CONNECTION_DELAY{10};
+	using Clock = std::chrono::steady_clock;
+
+	Clock::time_point deadline{Clock::time_point::max()};
+
+	{
+		std::lock_guard<std::mutex> lock(m_connectMutex);
+
+		auto now = Clock::now();
+		if (m_lastConnectTime == Clock::time_point::min())
+		{
+			m_lastConnectTime = now;
+			return;
+		}
+
+		if (now >= m_lastConnectTime + CONNECTION_DELAY)
+		{
+			m_lastConnectTime = now;
+			return;
+		}
+
+		m_lastConnectTime += CONNECTION_DELAY;
+		deadline = m_lastConnectTime;
+	}
+
+	if (deadline != Clock::time_point::max())
+	{
+		std::this_thread::sleep_until(deadline);
 	}
 }
