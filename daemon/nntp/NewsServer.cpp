@@ -39,7 +39,7 @@ NewsServer::NewsServer(int id, bool active, const char* name, const char* host, 
 
 void NewsServer::DelayConnect()
 {
-	constexpr std::chrono::milliseconds CONNECTION_DELAY{15};
+	constexpr std::chrono::milliseconds CONNECTION_DELAY{100};
 	using Clock = std::chrono::steady_clock;
 
 	Clock::time_point deadline{Clock::time_point::max()};
