@@ -651,6 +651,7 @@ void WebDownloader::Stop()
 	if (m_connection)
 	{
 		m_connection->SetSuppressErrors(true);
+		m_connection->SetForceClose(true);
 		m_connection->Cancel();
 	}
 	debug("WebDownloader stopped successfully");
