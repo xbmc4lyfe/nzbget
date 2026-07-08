@@ -100,7 +100,7 @@ jobs:
             cp nzbget-linux-bin-$ARCH-$TYPE/*.tar.gz build/
           done
         done
-        bash linux/build-nzbget.sh linux installer ${{ env.BUILD_TYPES }} ${{ env.BUILD_TESTING }}
+        bash linux/build-nzbget.sh linux installer ${{ env.BUILD_ARCHS }} ${{ env.BUILD_TYPES }} ${{ env.BUILD_TESTING }}
 
     - name: Rename build artifacts
       if: github.ref_name != 'main' && github.ref_name != 'develop'
